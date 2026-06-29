@@ -31,3 +31,7 @@ build-openssl = ["enable-openssl", "srtp2-sys/build-openssl"]
 [package.metadata.docs.rs]
 rustdoc-args = ["--cfg", "docsrs"]
 features = ["skip-linking", "enable-openssl"]
+
+# inplace_rekey needs srtp_inplace_rekey from our srtp2-sys fork
+[patch.crates-io]
+srtp2-sys = { git = "https://github.com/ArmanKolozyan/srtp2-sys.git" }
