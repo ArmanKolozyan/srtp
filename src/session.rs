@@ -248,6 +248,32 @@ impl SessionRef {
         }
     }
 
+    /// Install a new session key and salt directly into the AES-128-GCM stream
+    /// with this SSRC, in place, without rebuilding the stream or running the
+    /// master-to-session KDF. The replay database (rollover counter, high-water
+    /// sequence index, and seen-bitmask) is preserved, so replay protection stays
+    /// intact across the rekey.
+    ///
+    /// `key` must be 16 bytes and `salt` must be 12 bytes; otherwise this returns
+    /// `Error::BAD_PARAM`.
+    ///
+    /// This wraps the `srtp_inplace_rekey` extension added in the libsrtp fork
+    /// (https://github.com/ArmanKolozyan/srtp2-sys).
+    pub fn inplace_rekey(&mut self, ssrc: u32, key: &[u8], salt: &[u8]) -> Result<()> {
+        if key.len() != 16 || salt.len() != 12 {
+            return Err(Error::BAD_PARAM);
+        }
+        unsafe {
+            Error::check(sys::srtp_inplace_rekey(
+                self.as_ptr(),
+                ssrc,
+                key.as_ptr(),
+                salt.as_ptr(),
+            ))?;
+            Ok(())
+        }
+    }
+
     pub(crate) fn user_data_wrapper(&mut self) -> &mut UserDataWrapper {
         unsafe {
             match (sys::srtp_get_user_data(self.as_ptr()) as *mut UserDataWrapper).as_mut() {
